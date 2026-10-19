@@ -4,10 +4,24 @@ const $ = id => document.getElementById(id);
 const range = n => [...Array(n).keys()];
 const STEPS = 16;
 const DRUMS = ['Kick', 'Snare', 'Hi-hat', 'Open hat', 'Clap', 'Tom'];
+const ROWS = 60, LOW = 36;      // piano roll goes from C2 to B6
+const NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+const BLACK = new Set([1, 3, 6, 8, 10]);
+const SCALES = {
+  Chromatic: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+  Major: [0, 2, 4, 5, 7, 9, 11],
+  Minor: [0, 2, 3, 5, 7, 8, 10],
+  'Minor pentatonic': [0, 3, 5, 7, 10]
+};
+const KEYMAP = 'zsxdcvgbhnjm,';
+const midiOf = row => LOW + ROWS - 1 - row;
+const rowOf = midi => LOW + ROWS - 1 - midi;
 
 function blankSong() {
   return {
     bpm: 120,
+    wave: 'sawtooth', root: 0, scale: 'Minor', len: 1,
+    notes: {},                       // "step:row" -> length in steps
     drums: DRUMS.map(name => ({ name, steps: Array(STEPS).fill(0) }))
   };
 }
@@ -73,6 +87,28 @@ function drum(name, t, vol) {
   else { decay(0.7, 0.2); hiss('bandpass', 1500, 0.25); }      // clap
 }
 
+function playNote(midi, t, dur) {
+  const o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+  const level = 0.5;
+  o.type = song.wave;
+  o.frequency.value = 440 * Math.pow(2, (midi - 69) / 12);
+  f.type = 'lowpass';
+  f.frequency.value = 4200;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.linearRampToValueAtTime(0.35 * level * 2, t + 0.01);
+  g.gain.setTargetAtTime(0, t + dur, 0.06);
+  o.connect(f);
+  f.connect(g);
+  g.connect(out);
+  o.start(t);
+  o.stop(t + dur + 0.5);
+}
+
+function audition(midi) {
+  startAudio();
+  playNote(midi, ctx.currentTime, 0.25);
+}
+
 // sequencer
 
 function queueStep(s, t) {
@@ -80,6 +116,10 @@ function queueStep(s, t) {
     if (!d.steps[s]) return;
     drum(d.name, t, 0.8);
   });
+  for (const key in song.notes) {
+    const [ns, r] = key.split(':').map(Number);
+    if (ns === s) playNote(midiOf(r), t, song.notes[key] * secPerStep() * 0.95);
+  }
 }
 
 function tick() {
@@ -141,12 +181,13 @@ function buildRack() {
   $('rack').innerHTML = rows.join('');
 }
 
+const hasStart = s => Object.keys(song.notes).some(k => +k.split(':')[0] === s);
 
 function syncRack() {
   document.querySelectorAll('#rack .row').forEach(row => {
     const id = row.dataset.i;
     row.querySelectorAll('.steps b').forEach((b, s) => {
-      b.classList.toggle('on', !!song.drums[+id].steps[s]);
+      b.classList.toggle('on', id === 'lead' ? hasStart(s) : !!song.drums[+id].steps[s]);
     });
   });
 }
@@ -182,6 +223,86 @@ $('rack').addEventListener('click', e => {
 });
 window.addEventListener('pointerup', () => { drag = null; });
 
+// piano roll
+
+const keyEls = [];
+let cells = [];
+
+function buildRoll() {
+  range(ROWS).forEach(r => {
+    const m = midiOf(r), k = document.createElement('div');
+    k.className = 'key ' + (BLACK.has(m % 12) ? 'blk' : 'wht');
+    k.dataset.m = m;
+    if (m % 12 === 0) k.textContent = 'C' + (Math.floor(m / 12) - 1);
+    $('keys').append(k);
+    keyEls.push(k);
+  });
+  range(ROWS * STEPS).forEach(i => {
+    const c = document.createElement('div');
+    c.dataset.s = i % STEPS;
+    c.dataset.r = Math.floor(i / STEPS);
+    $('grid').append(c);
+  });
+  cells = [...$('grid').children];
+  $('roll').scrollTop = rowOf(66) * 15;      // start around the middle of the range
+}
+
+function paintRoll() {
+  const inScale = new Set(SCALES[song.scale].map(n => (n + song.root) % 12)), cover = {};
+  for (const k in song.notes) {
+    const [s, r] = k.split(':').map(Number);
+    for (let i = 0; i < song.notes[k] && s + i < STEPS; i++) cover[(s + i) + ':' + r] = i ? 'tail' : 'head';
+  }
+  for (let r = 0; r < ROWS; r++) {
+    const m = midiOf(r) % 12, inside = inScale.has(m);
+    keyEls[r].classList.toggle('dim', !inside);
+    keyEls[r].classList.toggle('root', m === song.root);
+    for (let s = 0; s < STEPS; s++) {
+      const cv = cover[s + ':' + r];
+      cells[r * STEPS + s].className = 'c' + (BLACK.has(m) ? ' blk' : '') + (inside ? '' : ' out') +
+        (s % 4 === 0 ? ' beat' : '') + (cv ? ' ' + cv : '');
+    }
+  }
+}
+
+// the step where the note covering this cell starts
+function ownerOf(s, r) {
+  for (let back = 0; back < STEPS; back++) {
+    const o = s - back, len = song.notes[o + ':' + r];
+    if (o >= 0 && len && len > back) return o;
+  }
+}
+
+function editNote(s, r, mode) {
+  if (mode === 'add') {
+    if (song.notes[s + ':' + r]) return;
+    song.notes[s + ':' + r] = song.len;
+    audition(midiOf(r));
+  } else {
+    const o = ownerOf(s, r);
+    if (o === undefined) return;
+    delete song.notes[o + ':' + r];
+  }
+  paintRoll();
+  syncRack();
+}
+
+$('grid').addEventListener('pointerdown', e => {
+  const c = e.target.closest('.c');
+  if (!c) return;
+  const s = +c.dataset.s, r = +c.dataset.r;
+  drag = { kind: 'roll', mode: ownerOf(s, r) === undefined ? 'add' : 'del' };
+  editNote(s, r, drag.mode);
+});
+$('grid').addEventListener('pointerover', e => {
+  const c = e.target.closest('.c');
+  if (c && drag && drag.kind === 'roll') editNote(+c.dataset.s, +c.dataset.r, drag.mode);
+});
+$('keys').addEventListener('pointerdown', e => {
+  const k = e.target.closest('.key');
+  if (k) audition(+k.dataset.m);
+});
+
 // controls
 
 function say(text) {
@@ -190,7 +311,12 @@ function say(text) {
 
 function applySong() {
   $('bpm').value = song.bpm;
+  $('wave').value = song.wave;
+  $('root').value = song.root;
+  $('scale').value = song.scale;
+  $('len').value = song.len;
   syncRack();
+  paintRoll();
 }
 
 $('play').addEventListener('click', play);
@@ -200,11 +326,30 @@ $('bpm').addEventListener('change', e => {
   e.target.value = song.bpm;
 });
 
+const bind = (id, fn) => $(id).addEventListener('input', e => fn(e.target.value));
+bind('wave', v => { song.wave = v; });
+bind('len', v => { song.len = +v; });
+bind('root', v => { song.root = +v; paintRoll(); });
+bind('scale', v => { song.scale = v; paintRoll(); });
+
+NAMES.forEach((n, i) => $('root').add(new Option(n, i)));
+Object.keys(SCALES).forEach(s => $('scale').add(new Option(s, s)));
+
+// computer keyboard plays the lead, [ and ] change the octave
+let octave = 4;
 document.addEventListener('keydown', e => {
   if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
   if (/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName) && e.target.type !== 'range') return;
   if (e.code === 'Space') { e.preventDefault(); play(); return; }
+  if (e.key === '[' || e.key === ']') {
+    octave = Math.min(6, Math.max(2, octave + (e.key === ']' ? 1 : -1)));
+    say('Octave: C' + octave);
+    return;
+  }
+  const i = KEYMAP.indexOf(e.key.toLowerCase());
+  if (i >= 0) audition(12 * (octave + 1) + i);
 });
 
 buildRack();
+buildRoll();
 applySong();
