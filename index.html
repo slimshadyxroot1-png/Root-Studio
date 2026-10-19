@@ -13,12 +13,20 @@
   <button id="play">Play</button>
   <button id="stop">Stop</button>
   <label>BPM <input id="bpm" type="number" min="50" max="220" value="120"></label>
+  <label>Swing <input id="swing" type="range" min="0" max="100" value="0"></label>
+  <label>Master <input id="master" type="range" min="0" max="100" value="80"></label>
+  <label>Delay <input id="delay" type="range" min="0" max="80" value="20"></label>
+  <input id="title" type="text" value="Untitled" aria-label="Song name">
+  <button id="save">Save</button>
+  <button id="open">Open</button>
+  <input id="file" type="file" accept=".json" hidden>
 </header>
 
 <div id="main">
+  <aside id="presets"><h3>Presets</h3></aside>
   <section id="work">
     <div class="panel">
-      <h2>Drum machine</h2>
+      <h2>Channel rack</h2>
       <div id="rack"></div>
     </div>
     <div class="panel">
