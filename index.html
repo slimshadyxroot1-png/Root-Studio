@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Root Studio</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="logo">Root Studio</div>
+  <button id="play">Play</button>
+  <button id="stop">Stop</button>
+  <label>BPM <input id="bpm" type="number" min="50" max="220" value="120"></label>
+</header>
+
+<div id="main">
+  <section id="work">
+    <div class="panel">
+      <h2>Drum machine</h2>
+      <div id="rack"></div>
+    </div>
+  </section>
+</div>
+
+<footer id="status">Click the squares to write a drum pattern, then press Play.</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
