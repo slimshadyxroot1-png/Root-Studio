@@ -20,9 +20,11 @@ const rowOf = midi => LOW + ROWS - 1 - midi;
 function blankSong() {
   return {
     bpm: 120,
+    name: 'Untitled', swing: 0, master: 0.8, delay: 0.2,
+    lead: { vol: 0.5, mute: false },
     wave: 'sawtooth', root: 0, scale: 'Minor', len: 1,
     notes: {},                       // "step:row" -> length in steps
-    drums: DRUMS.map(name => ({ name, steps: Array(STEPS).fill(0) }))
+    drums: DRUMS.map(name => ({ name, vol: 0.8, mute: false, steps: Array(STEPS).fill(0) }))
   };
 }
 let song = blankSong();
@@ -30,6 +32,7 @@ let song = blankSong();
 // sound
 
 let ctx, out, master, timer, noise, playing = false, step = 0, nextTime = 0, queued = [];
+let echo, wet;
 const secPerStep = () => 60 / song.bpm / 4;
 
 function startAudio() {
@@ -39,9 +42,25 @@ function startAudio() {
     master = ctx.createGain();
     out.connect(master);
     master.connect(ctx.destination);
-    master.gain.value = 0.8;
+    echo = ctx.createDelay(2);
+    wet = ctx.createGain();
+    const feedback = ctx.createGain();
+    feedback.gain.value = 0.35;
+    out.connect(echo);
+    echo.connect(feedback);
+    feedback.connect(echo);
+    echo.connect(wet);
+    wet.connect(master);
   }
   if (ctx.state === 'suspended') ctx.resume();
+  applyMix();
+}
+
+function applyMix() {
+  if (!ctx) return;
+  master.gain.value = song.master;
+  wet.gain.value = song.delay;
+  echo.delayTime.value = secPerStep() * 3;
 }
 
 function noiseBuf() {
@@ -89,7 +108,7 @@ function drum(name, t, vol) {
 
 function playNote(midi, t, dur) {
   const o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain();
-  const level = 0.5;
+  const level = song.lead.mute ? 0 : song.lead.vol;
   o.type = song.wave;
   o.frequency.value = 440 * Math.pow(2, (midi - 69) / 12);
   f.type = 'lowpass';
@@ -114,7 +133,7 @@ function audition(midi) {
 function queueStep(s, t) {
   song.drums.forEach(d => {
     if (!d.steps[s]) return;
-    drum(d.name, t, 0.8);
+    if (!d.mute) drum(d.name, t, d.vol);
   });
   for (const key in song.notes) {
     const [ns, r] = key.split(':').map(Number);
@@ -124,7 +143,7 @@ function queueStep(s, t) {
 
 function tick() {
   while (nextTime < ctx.currentTime + 0.12) {
-    const at = nextTime;
+    const at = nextTime + (step % 2 ? secPerStep() * song.swing * 0.6 : 0);      // swing pushes every other step late
     queueStep(step, at);
     queued.push({ step, time: at });
     nextTime += secPerStep();
@@ -175,12 +194,16 @@ let drag = null;                     // the mouse is held down on the rack or th
 function buildRack() {
   const cells = () => range(STEPS).map(s => `<b data-s="${s}"></b>`).join('');
   const row = (name, id, ro) => `<div class="row" data-i="${id}">` +
+    `<button class="led" title="Mute"></button>` +
     `<button class="name" title="Click to preview">${name}</button>` +
+    `<input class="vol" type="range" min="0" max="100" title="Volume">` +
     `<div class="steps${ro ? ' ro' : ''}">${cells()}</div></div>`;
   const rows = song.drums.map((d, i) => row(d.name, i, false));
+  rows.push(row('Lead', 'lead', true));      // shows where the piano roll notes start
   $('rack').innerHTML = rows.join('');
 }
 
+const channel = id => (id === 'lead' ? song.lead : song.drums[+id]);
 const hasStart = s => Object.keys(song.notes).some(k => +k.split(':')[0] === s);
 
 function syncRack() {
@@ -189,6 +212,8 @@ function syncRack() {
     row.querySelectorAll('.steps b').forEach((b, s) => {
       b.classList.toggle('on', id === 'lead' ? hasStart(s) : !!song.drums[+id].steps[s]);
     });
+    row.querySelector('.led').classList.toggle('lit', !channel(id).mute);
+    row.querySelector('.vol').value = channel(id).vol * 100;
   });
 }
 
@@ -197,7 +222,7 @@ function setDrumStep(id, s, on) {
   syncRack();
   if (on && !playing) {
     startAudio();
-    drum(song.drums[id].name, ctx.currentTime, 0.8);
+    drum(song.drums[id].name, ctx.currentTime, song.drums[id].vol);
   }
 }
 
@@ -216,10 +241,19 @@ $('rack').addEventListener('click', e => {
   const row = e.target.closest('.row');
   if (!row) return;
   const id = row.dataset.i;
+  if (e.target.closest('.led')) {
+    channel(id).mute = !channel(id).mute;
+    syncRack();
+    return;
+  }
   if (e.target.closest('.name')) {
     startAudio();
-    drum(song.drums[+id].name, ctx.currentTime, 0.8);
+    if (id === 'lead') return audition(60);
+    drum(song.drums[+id].name, ctx.currentTime, song.drums[+id].vol);
   }
+});
+$('rack').addEventListener('input', e => {
+  if (e.target.classList.contains('vol')) channel(e.target.closest('.row').dataset.i).vol = e.target.value / 100;
 });
 window.addEventListener('pointerup', () => { drag = null; });
 
@@ -311,12 +345,17 @@ function say(text) {
 
 function applySong() {
   $('bpm').value = song.bpm;
+  $('swing').value = song.swing * 100;
+  $('master').value = song.master * 100;
+  $('delay').value = song.delay * 100;
+  $('title').value = song.name;
   $('wave').value = song.wave;
   $('root').value = song.root;
   $('scale').value = song.scale;
   $('len').value = song.len;
   syncRack();
   paintRoll();
+  applyMix();
 }
 
 $('play').addEventListener('click', play);
@@ -324,6 +363,7 @@ $('stop').addEventListener('click', stop);
 $('bpm').addEventListener('change', e => {
   song.bpm = Math.min(220, Math.max(50, +e.target.value || 120));
   e.target.value = song.bpm;
+  applyMix();
 });
 
 const bind = (id, fn) => $(id).addEventListener('input', e => fn(e.target.value));
@@ -334,6 +374,11 @@ bind('scale', v => { song.scale = v; paintRoll(); });
 
 NAMES.forEach((n, i) => $('root').add(new Option(n, i)));
 Object.keys(SCALES).forEach(s => $('scale').add(new Option(s, s)));
+
+bind('swing', v => { song.swing = v / 100; });
+bind('master', v => { song.master = v / 100; applyMix(); });
+bind('delay', v => { song.delay = v / 100; applyMix(); });
+bind('title', v => { song.name = v; });
 
 // computer keyboard plays the lead, [ and ] change the octave
 let octave = 4;
@@ -349,6 +394,80 @@ document.addEventListener('keydown', e => {
   const i = KEYMAP.indexOf(e.key.toLowerCase());
   if (i >= 0) audition(12 * (octave + 1) + i);
 });
+
+// presets, saving and loading
+
+function setDrums(s, ...rows) {
+  rows.forEach((r, i) => { s.drums[i].steps = range(STEPS).map(k => (r && r[k] === 'x' ? 1 : 0)); });
+}
+
+const presets = {
+  'Four on the floor'(s) {
+    setDrums(s, 'x...x...x...x...', '....x.......x...', 'x.x.x.x.x.x.x.x.', '..x...x...x...x.', '....x.......x...');
+    [[0, 48], [3, 48], [6, 51], [8, 48], [11, 55], [14, 51]].forEach(([st, m]) => { s.notes[st + ':' + rowOf(m)] = 1; });
+  },
+  'Hip hop'(s) {
+    setDrums(s, 'x.....x.x.......', '....x.......x...', 'x.x.x.x.x.x.x.x.');
+    s.bpm = 90;
+    s.swing = 0.3;
+  },
+  'Empty'() {}
+};
+
+Object.keys(presets).forEach(name => {
+  const b = document.createElement('button');
+  b.textContent = name;
+  b.addEventListener('click', () => {
+    song = blankSong();
+    presets[name](song);
+    song.name = name;
+    applySong();
+    say('Loaded ' + name);
+  });
+  $('presets').append(b);
+});
+
+// mix a saved song into a blank one so missing fields get their defaults
+function loadSong(data) {
+  const base = blankSong();
+  song = { ...base, ...data, lead: { ...base.lead, ...data.lead } };
+  song.drums = base.drums.map((d, i) => {
+    const saved = (data.drums || [])[i] || {};
+    return { ...d, ...saved, steps: Array.isArray(saved.steps) ? saved.steps : d.steps };
+  });
+}
+
+$('save').addEventListener('click', () => {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(song, null, 2)], { type: 'application/json' }));
+  a.download = (song.name || 'root-studio').replace(/[^\w-]+/g, '-') + '.json';
+  a.click();
+  say('Saved ' + a.download);
+});
+$('open').addEventListener('click', () => $('file').click());
+$('file').addEventListener('change', async e => {
+  const f = e.target.files[0];
+  e.target.value = '';
+  if (!f) return;
+  try {
+    stop();
+    loadSong(JSON.parse(await f.text()));
+    applySong();
+    say('Opened ' + f.name);
+  } catch (err) {
+    say('Could not open that file.');
+  }
+});
+
+// the song is kept in the browser, so a reload does not lose it
+try {
+  const saved = localStorage.getItem('root-studio');
+  if (saved) loadSong(JSON.parse(saved));
+} catch (err) { /* nothing saved yet */ }
+setInterval(() => {
+  try { localStorage.setItem('root-studio', JSON.stringify(song)); }
+  catch (err) { /* storage blocked */ }
+}, 4000);
 
 buildRack();
 buildRoll();

@@ -32,6 +32,16 @@ h2 label { display: flex; align-items: center; gap: 4px; font-weight: 400; }
 .steps b.on { background: #ff8c1a; border-color: #a8530a; }
 .now { filter: brightness(1.45); }
 
+/* mute light, volume slider and the presets list */
+.led { width: 12px; height: 12px; padding: 0; border-radius: 50%; background: #243018; }
+.led.lit { background: #9ccc3c; box-shadow: 0 0 4px #7fb02a; }
+.vol { width: 70px; }
+.steps.ro b { cursor: default; }
+#presets { width: 150px; flex: none; padding: 8px 6px; background: #1e2225; border-right: 1px solid #14171a; }
+#presets h3 { margin: 0 0 6px 6px; font-size: 12px; font-weight: 600; color: #808a91; }
+#presets button { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 5px 6px; }
+#presets button:hover { background: #2d3338; color: #fff; }
+header input[type=text] { width: 140px; }
 
 /* piano roll */
 #roll { display: flex; height: 340px; overflow: auto; }
