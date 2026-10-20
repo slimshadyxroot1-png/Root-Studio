@@ -2,51 +2,79 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Root Studio</title>
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
 <header>
   <div class="logo">Root Studio</div>
-  <button id="play">Play</button>
-  <button id="stop">Stop</button>
-  <label>BPM <input id="bpm" type="number" min="50" max="220" value="120"></label>
-  <label>Swing <input id="swing" type="range" min="0" max="100" value="0"></label>
-  <label>Master <input id="master" type="range" min="0" max="100" value="80"></label>
-  <label>Delay <input id="delay" type="range" min="0" max="80" value="20"></label>
+  <div class="transport">
+    <button id="play" title="Play / pause (Space)" aria-label="Play"></button>
+    <button id="stop" title="Stop" aria-label="Stop"></button>
+  </div>
+  <label class="lcd">BPM <input id="bpm" type="number" min="50" max="220" value="128"></label>
+  <label class="knob">Swing <input id="swing" type="range" min="0" max="100" value="0"></label>
+  <label class="knob">Master <input id="master" type="range" min="0" max="100" value="80"></label>
+  <label class="knob">Delay <input id="delay" type="range" min="0" max="80" value="20"></label>
+  <span class="spacer"></span>
   <input id="title" type="text" value="Untitled" aria-label="Song name">
-  <button id="save">Save</button>
+  <button id="save" title="Saves the song and its audio track (Ctrl+S)">Save</button>
   <button id="open">Open</button>
   <input id="file" type="file" accept=".json" hidden>
 </header>
 
 <div id="main">
-  <aside id="presets"><h3>Presets</h3></aside>
+  <aside id="browser">
+    <h3>Browser</h3>
+    <div id="presets"></div>
+  </aside>
   <section id="work">
     <div class="panel">
-      <h2>Channel rack</h2>
+      <div class="title">Channel rack
+      </div>
       <div id="rack"></div>
     </div>
     <div class="panel">
-      <h2>Piano roll
-        <label>Wave <select id="wave">
+      <div class="title">Mixer <span>Pan, reverb and delay sends, mute and solo per strip. Master EQ, reverb and drive on the right.</span></div>
+      <div id="mixer"></div>
+    </div>
+    <div class="panel grow">
+      <div class="title">
+        Piano roll
+        <label>Osc 1 <select id="wave">
           <option value="sawtooth">Saw</option><option value="square">Square</option>
-          <option value="triangle">Triangle</option><option value="sine">Sine</option></select></label>
+          <option value="triangle">Triangle</option><option value="sine">Sine</option>
+          </select></label>
         <label>Key <select id="root"></select></label>
         <label><select id="scale"></select></label>
         <label>Note length <select id="len">
           <option value="1">1/16</option><option value="2">1/8</option>
           <option value="4">1/4</option><option value="8">1/2</option></select></label>
-      </h2>
-      <div id="roll"><div id="keys"></div><div id="grid"></div></div>
+      </div>
+      <div id="roll">
+        <div id="rollruler"></div>
+        <div id="rollbody"><div id="keys"></div><div id="grid"><div id="playhead"></div></div></div>
+      </div>
     </div>
   </section>
 </div>
 
-<footer id="status">Click the squares to write a drum pattern, then press Play.</footer>
+<footer>
+  <span id="status">Click the step buttons or the piano roll to write a pattern.</span>
+  <span id="hint">Keys Z to M play the synth, [ and ] change octave (C4)</span>
+</footer>
 
-<script src="app.js"></script>
+<script src="js/state.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/rack.js"></script>
+<script src="js/roll.js"></script>
+<script src="js/synth.js"></script>
+<script src="js/mixer.js"></script>
+<script src="js/arrange.js"></script>
+<script src="js/app.js"></script>
+<script src="js/ui.js"></script>
+
 </body>
 </html>
