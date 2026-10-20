@@ -12,12 +12,15 @@ function applySong() {
   $('swing').value = song.swing * 100;
   $('master').value = song.master * 100;
   $('delay').value = song.delay * 100;
+  $('sig').value = song.sig;
   $('root').value = song.root;
   $('scale').value = song.scale;
   $('len').value = song.len;
   $('wave').value = curTrack().wave;
   applySig();                    // rebuilds the rack and roll for the bar length
+  fillPatterns();
   buildMixer();
+  paintArr();
   syncGraph();
   syncRack();
   paintRoll();
@@ -165,6 +168,7 @@ Object.keys(presets).forEach(name => {
 });
 NAMES.forEach((n, i) => $('root').add(new Option(n, i)));
 Object.keys(SCALES).forEach(s => $('scale').add(new Option(s, s)));
+SIGS.forEach(s => $('sig').add(new Option(s, s)));
 
 try {
   const saved = localStorage.getItem('root-studio');

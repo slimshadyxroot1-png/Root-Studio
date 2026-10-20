@@ -193,15 +193,23 @@ function auditionNote(m, vel = 100) {
   playNote(ctx, strip(graph, 't' + song.sel).in, m, ctx.currentTime, 0.25, curTrack(), vel, 1);
 }
 
-const startBar = () => 0;
-const patternAt = () => curPat();
+const startBar = () => (song.mode === 'song' && song.loop.on ? song.loop.a : 0);
+const patternAt = b => (song.mode === 'song' ? song.patterns[song.arr[b]] || null : curPat());
 
-function sliceAt() {
-  return 0;
+// which bar of a long pattern is playing
+function sliceAt(b, lap) {
+  if (song.mode !== 'song') return lap % curPat().bars;
+  let n = 0;
+  while (b - n - 1 >= 0 && song.arr[b - n - 1] === song.arr[b]) n++;
+  return n % (patternAt(b) ? patternAt(b).bars : 1);
 }
 
 function advanceBar() {
   loopNo++;
+  if (song.mode !== 'song') return;
+  bar++;
+  const end = song.loop.on ? song.loop.b : songEnd();
+  if (bar >= end) bar = song.loop.on ? song.loop.a : 0;
 }
 
 function tick() {
@@ -254,4 +262,5 @@ function setHead(n, b, sb) {
   const ph = $('playhead');
   ph.style.display = n < 0 ? 'none' : 'block';
   ph.style.left = (n * 100 / PSTEPS) + '%';
+  paintArrHead(b === undefined ? -1 : b, sb);
 }
