@@ -32,6 +32,20 @@
   </aside>
   <section id="work">
     <div class="panel">
+      <div class="title">Playlist
+        <button id="mode" title="Pattern mode loops the selected pattern. Song mode plays the playlist below.">Pattern mode</button>
+        <label>Pattern <select id="patSel"></select></label>
+        <label>Length <select id="patBars"><option value="1">1 bar</option><option value="2">2 bars</option><option value="4">4 bars</option></select></label>
+        <button id="patNew">New</button><button id="patClone">Clone</button>
+        <button id="patRename">Rename</button><button id="patDel">Delete</button>
+        <label>Time <select id="sig"></select></label>
+        <button id="loopOn" title="Loop a range of bars in song mode">Loop</button>
+        <label>bars <input id="loopA" type="number" min="1" max="32"> to <input id="loopB" type="number" min="1" max="32"></label>
+        <span>Click bars to paint the selected pattern (a long pattern fills its length). Click a bar number to set the loop start, Shift+click for the end.</span>
+      </div>
+      <div id="arrwrap"><div id="arrruler"></div><div id="arr"></div></div>
+    </div>
+    <div class="panel">
       <div class="title">Channel rack
       </div>
       <div id="rack"></div>
