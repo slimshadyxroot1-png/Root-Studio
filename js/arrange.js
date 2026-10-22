@@ -34,13 +34,15 @@ $('mode').addEventListener('click', () => {
   fillPatterns();
 });
 $('patSel').addEventListener('input', e => { song.cur = +e.target.value; showPattern(); });
-$('patBars').addEventListener('input', e => { curPat().bars = +e.target.value; showPattern(); });
+$('patBars').addEventListener('input', e => { pushUndo(); curPat().bars = +e.target.value; showPattern(); });
 $('patNew').addEventListener('click', () => {
+  pushUndo();
   song.patterns.push(blankPattern('Pattern ' + (song.patterns.length + 1), song.tracks.length));
   song.cur = song.patterns.length - 1;
   showPattern();
 });
 $('patClone').addEventListener('click', () => {
+  pushUndo();
   const c = JSON.parse(JSON.stringify(curPat()));
   c.name += ' copy';
   song.patterns.push(c);
@@ -49,10 +51,11 @@ $('patClone').addEventListener('click', () => {
 });
 $('patRename').addEventListener('click', () => {
   const name = prompt('Pattern name', curPat().name);
-  if (name) { curPat().name = name; fillPatterns(); }
+  if (name) { pushUndo(); curPat().name = name; fillPatterns(); }
 });
 $('patDel').addEventListener('click', () => {
   if (song.patterns.length < 2) return say('A song needs at least one pattern.');
+  pushUndo();
   const i = song.cur;
   song.patterns.splice(i, 1);
   song.arr = song.arr.map(p => (p === i ? -1 : p > i ? p - 1 : p));
@@ -62,6 +65,7 @@ $('patDel').addEventListener('click', () => {
 });
 
 $('sig').addEventListener('input', e => {
+  pushUndo();
   stop();
   song.sig = e.target.value;
   applySig();
@@ -105,6 +109,7 @@ let arrDrag = null;
 $('arr').addEventListener('pointerdown', e => {
   const b = e.target.closest('b');
   if (!b) return;
+  pushUndo();
   const i = +b.dataset.i;
   arrDrag = song.arr[i] === song.cur ? -1 : song.cur;
   const n = arrDrag < 0 ? 1 : curPat().bars;       // a long pattern fills as many bars as it is long
@@ -131,10 +136,55 @@ $('arrruler').addEventListener('click', e => {
 
 // tracks
 
+function fillTracks() {
+  const sel = $('trackSel');
+  sel.length = 0;
+  song.tracks.forEach((t, i) => sel.add(new Option(t.name, i)));
+  sel.value = song.sel;
+  $('trackName').value = curTrack().name;
+}
 
 function selectTrack(i) {
   song.sel = i;
+  $('trackSel').value = i;
+  $('trackName').value = curTrack().name;
   $('wave').value = curTrack().wave;
+  syncSynth();
   syncRack();
   paintRoll();
 }
+
+$('trackSel').addEventListener('input', e => selectTrack(+e.target.value));
+$('trackName').addEventListener('input', e => {
+  curTrack().name = e.target.value;
+  $('trackSel').options[song.sel].text = e.target.value;
+  syncRack();
+  syncMixer();
+});
+$('addTrack').addEventListener('click', () => {
+  if (song.tracks.length >= 8) return say('Eight tonal tracks is the limit.');
+  pushUndo();
+  song.tracks.push(blankTrack('Track ' + (song.tracks.length + 1)));
+  song.patterns.forEach(p => p.notes.push({}));
+  song.sel = song.tracks.length - 1;
+  applySong();
+});
+$('delTrack').addEventListener('click', () => {
+  if (song.tracks.length < 2) return say('Keep at least one tonal track.');
+  pushUndo();
+  const i = song.sel;
+  song.tracks.splice(i, 1);
+  const remap = src => {                  // automation ids of later tracks move down by one
+    const auto = {};
+    for (const id in src) {
+      const m = /^(vol|pan)(\d+)$/.exec(id);
+      if (!m || +m[2] < i) auto[id] = src[id];
+      else if (+m[2] > i) auto[m[1] + (+m[2] - 1)] = src[id];
+    }
+    return auto;
+  };
+  song.patterns.forEach(p => { p.notes.splice(i, 1); p.auto = remap(p.auto); });
+  song.sauto = remap(song.sauto);
+  song.sel = Math.min(i, song.tracks.length - 1);
+  applySong();
+});

@@ -104,6 +104,11 @@ button.active { background: #5b4a2c; color: #ffb35c; }
 #work { overflow-y: auto; }
 .panel { flex: none; }
 .panel.grow { flex: 1 0 380px; }
+#synth { display: flex; flex-wrap: wrap; gap: 8px 16px; padding: 8px 10px; }
+.sk { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 82px; color: var(--dim); }
+.sk input[type=range] { width: 76px; }
+.sk select { padding: 2px 4px; width: 82px; }
+.sk output { color: var(--accent); font-family: Consolas, "Courier New", monospace; }
 
 /* playlist, mixer, automation, velocity */
 #arrwrap { overflow-x: auto; padding: 4px 6px 6px; }
@@ -131,8 +136,17 @@ button.active { background: #5b4a2c; color: #ffb35c; }
 .mb [data-b=mute].active { background: #7d2c25; color: #fff; }
 .mb [data-b=solo].active { background: #6b5d1e; color: #ffe066; }
 
+#velrow { position: sticky; bottom: 0; z-index: 3; display: flex; min-width: 560px;
+  background: var(--panel); border-top: 1px solid var(--edge); }
+#velrow span { flex: none; width: 56px; padding: 3px; font-size: 9px; color: var(--dim); text-align: right; }
+#vel { flex: 1; display: grid; height: 48px; cursor: ns-resize; touch-action: none; }
+#vel div { position: relative; border-left: 1px solid #2d3337; }
+#vel div.beat { border-left-color: #4b5359; }
+#vel i { position: absolute; left: 25%; right: 25%; bottom: 0; background: var(--accent); border-radius: 2px 2px 0 0; }
 
 #mode.active, #loopOn.active { background: #46562c; color: #d6f08a; }
+#defVel { width: 70px; }
+#trackName { width: 90px; padding: 2px 4px; }
 
 /* foldable panels, note selection, project box */
 .title { cursor: pointer; user-select: none; }

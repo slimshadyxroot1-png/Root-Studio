@@ -49,6 +49,7 @@ function paintRoll() {
       cell.style.opacity = cv ? 0.35 + 0.65 * cv.v / 127 : '';
     }
   }
+  paintVel();
 }
 
 function ownerOf(s, r) {
@@ -93,3 +94,31 @@ $('keys').addEventListener('pointerdown', e => {
   const k = e.target.closest('.key');
   if (k) auditionNote(+k.dataset.m);
 });
+
+// velocity lane
+
+function paintVel() {
+  const by = {}, notes = curNotes();
+  for (const k in notes) by[+k.split(':')[0]] = notes[k].v;
+  const el = $('vel');
+  el.style.gridTemplateColumns = `repeat(${PSTEPS}, 1fr)`;
+  el.innerHTML = range(PSTEPS).map(s =>
+    `<div data-s="${s}"${s % BEAT === 0 ? ' class="beat"' : ''}>${s in by ? `<i style="height:${by[s] / 127 * 100}%"></i>` : ''}</div>`).join('');
+}
+
+let velDrag = false;
+function velPoint(e) {
+  const r = $('vel').getBoundingClientRect(), notes = curNotes();
+  const s = Math.min(PSTEPS - 1, Math.max(0, Math.floor((e.clientX - r.left) / r.width * PSTEPS)));
+  const v = Math.round(Math.min(127, Math.max(1, (r.bottom - e.clientY) / r.height * 127)));
+  for (const k in notes) if (+k.split(':')[0] === s) notes[k].v = v;
+  paintRoll();
+}
+$('vel').addEventListener('pointerdown', e => {
+  pushUndo();
+  velDrag = true;
+  $('vel').setPointerCapture(e.pointerId);
+  velPoint(e);
+});
+$('vel').addEventListener('pointermove', e => { if (velDrag) velPoint(e); });
+$('vel').addEventListener('pointerup', () => { velDrag = false; });
