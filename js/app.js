@@ -16,9 +16,12 @@ function applySong() {
   $('root').value = song.root;
   $('scale').value = song.scale;
   $('len').value = song.len;
+  $('defVel').value = song.vel;
   $('wave').value = curTrack().wave;
   applySig();                    // rebuilds the rack and roll for the bar length
+  fillTracks();
   fillPatterns();
+  syncSynth();
   buildMixer();
   paintArr();
   syncGraph();
@@ -34,6 +37,7 @@ bind('master', v => { song.master = v / 100; syncGraph(); });
 bind('delay', v => { song.delay = v / 100; syncGraph(); });
 bind('wave', v => { curTrack().wave = v; });
 bind('len', v => { song.len = +v; });
+bind('defVel', v => { song.vel = +v; });
 bind('root', v => { song.root = +v; paintRoll(); });
 bind('scale', v => { song.scale = v; paintRoll(); });
 bind('title', v => { song.name = v; });

@@ -44,6 +44,7 @@ function syncMixer() {
   document.querySelectorAll('#mixer [data-m]').forEach(i => { i.value = getM(i.dataset.m); });
 }
 
+$('mixer').addEventListener('pointerdown', () => pushUndo(), true);
 $('mixer').addEventListener('input', e => {
   const el = e.target, mx = el.closest('.mx');
   if (el.dataset.f) { stripOf(mx.dataset.k)[el.dataset.f] = +el.value / 100; syncRack(); }

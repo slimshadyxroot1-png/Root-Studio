@@ -19,6 +19,8 @@
   <label class="knob">Master <input id="master" type="range" min="0" max="100" value="80"></label>
   <label class="knob">Delay <input id="delay" type="range" min="0" max="80" value="20"></label>
   <span class="spacer"></span>
+  <button id="undo" title="Ctrl+Z">Undo</button>
+  <button id="redo" title="Ctrl+Y">Redo</button>
   <input id="title" type="text" value="Untitled" aria-label="Song name">
   <button id="save" title="Saves the song and its audio track (Ctrl+S)">Save</button>
   <button id="open">Open</button>
@@ -54,9 +56,19 @@
       <div class="title">Mixer <span>Pan, reverb and delay sends, mute and solo per strip. Master EQ, reverb and drive on the right.</span></div>
       <div id="mixer"></div>
     </div>
+    <div class="panel">
+      <div class="title">Synthesizer
+        <select id="synthPreset"><option value="">Load preset</option></select>
+        <span>Drives the selected track. Osc 1 is chosen in the piano roll.</span>
+      </div>
+      <div id="synth"></div>
+    </div>
     <div class="panel grow">
       <div class="title">
         Piano roll
+        <label>Track <select id="trackSel"></select></label>
+        <input id="trackName" type="text" aria-label="Track name">
+        <button id="addTrack" title="Add a tonal track">+</button><button id="delTrack" title="Delete the selected track">-</button>
         <label>Osc 1 <select id="wave">
           <option value="sawtooth">Saw</option><option value="square">Square</option>
           <option value="triangle">Triangle</option><option value="sine">Sine</option>
@@ -66,10 +78,12 @@
         <label>Note length <select id="len">
           <option value="1">1/16</option><option value="2">1/8</option>
           <option value="4">1/4</option><option value="8">1/2</option></select></label>
+        <label>Velocity <input id="defVel" type="range" min="1" max="127" value="100" title="Velocity of new notes"></label>
       </div>
       <div id="roll">
         <div id="rollruler"></div>
         <div id="rollbody"><div id="keys"></div><div id="grid"><div id="playhead"></div></div></div>
+        <div id="velrow"><span>Velocity</span><div id="vel"></div></div>
       </div>
     </div>
   </section>
@@ -87,6 +101,7 @@
 <script src="js/synth.js"></script>
 <script src="js/mixer.js"></script>
 <script src="js/arrange.js"></script>
+<script src="js/tools.js"></script>
 <script src="js/app.js"></script>
 <script src="js/ui.js"></script>
 
