@@ -98,6 +98,7 @@ footer { display: flex; justify-content: space-between; gap: 10px; padding: 3px 
 @media (max-width: 720px) { #browser { display: none; } }
 
 button.active { background: #5b4a2c; color: #ffb35c; }
+#rec.active { background: #7d2c25; color: #fff; }
 .title input[type=number] { width: 48px; padding: 2px 4px; }
 .title button { padding: 2px 8px; }
 
@@ -156,6 +157,7 @@ button.active { background: #5b4a2c; color: #ffb35c; }
 .panel.collapsed > :not(.title) { display: none; }
 .panel.collapsed .title > * { display: none; }
 .panel.collapsed.grow { flex: none; }
+.c.sel { outline: 2px solid #fff; outline-offset: -2px; }
 
 /* audio clips, long patterns, drum lane, song automation */
 .steps b, .ruler i { flex: none; }

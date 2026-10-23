@@ -1,6 +1,6 @@
 // sound
 
-let headStep = -1, loopNo = 0, bar = 0;
+let headStep = -1, metro = false, loopNo = 0, bar = 0;
 let ctx, graph, timer, playing = false, step = 0, nextTime = 0, queued = [];
 const secPerStep = () => 60 / song.bpm / 4;
 
@@ -186,6 +186,7 @@ function queueStep(c, g, s, t, p, b, lap, k = 0) {
       }
     });
   }
+  if (metro && s % BEAT === 0) click(c, g.in, t, s === 0);
 }
 
 function auditionNote(m, vel = 100) {

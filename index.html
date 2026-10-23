@@ -14,6 +14,9 @@
     <button id="play" title="Play / pause (Space)" aria-label="Play"></button>
     <button id="stop" title="Stop" aria-label="Stop"></button>
   </div>
+  <button id="rec" title="Record notes from the keyboard or a MIDI keyboard while the song plays">Rec</button>
+  <button id="metro" title="Click on every beat">Metronome</button>
+  <button id="tap" title="Tap in time to set the tempo">Tap</button>
   <label class="lcd">BPM <input id="bpm" type="number" min="50" max="220" value="128"></label>
   <label class="knob">Swing <input id="swing" type="range" min="0" max="100" value="0"></label>
   <label class="knob">Master <input id="master" type="range" min="0" max="100" value="80"></label>
@@ -79,6 +82,15 @@
           <option value="1">1/16</option><option value="2">1/8</option>
           <option value="4">1/4</option><option value="8">1/2</option></select></label>
         <label>Velocity <input id="defVel" type="range" min="1" max="127" value="100" title="Velocity of new notes"></label>
+        <label>Tool <select id="tool"><option value="draw">Draw</option><option value="select">Select</option></select></label>
+        <label>Snap <select id="snap"><option value="1">1/16</option><option value="2">1/8</option><option value="4">1/4</option></select></label>
+        <button id="quant" title="Snap note starts to the grid (selected notes, or all)">Quantize</button>
+        <button id="ncopy" title="Ctrl+C">Copy</button><button id="npaste" title="Ctrl+V">Paste</button><button id="ndel" title="Delete">Delete</button>
+        <span>Transpose <button data-tr="-12">-12</button><button data-tr="-1">-1</button><button data-tr="1">+1</button><button data-tr="12">+12</button></span>
+        <button id="fit" title="Move every note onto the nearest scale tone">Fit to scale</button>
+        <label>Chords <select id="prog"></select></label>
+        <button id="chord" title="Replace this track's part with this progression">Insert</button>
+        <button id="arp" title="Spread each chord over its beat">Arpeggiate</button>
       </div>
       <div id="roll">
         <div id="rollruler"></div>
@@ -91,6 +103,7 @@
 
 <footer>
   <span id="status">Click the step buttons or the piano roll to write a pattern.</span>
+  <span id="midi">MIDI: ...</span>
   <span id="hint">Keys Z to M play the synth, [ and ] change octave (C4)</span>
 </footer>
 
@@ -102,6 +115,7 @@
 <script src="js/mixer.js"></script>
 <script src="js/arrange.js"></script>
 <script src="js/tools.js"></script>
+<script src="js/midi.js"></script>
 <script src="js/app.js"></script>
 <script src="js/ui.js"></script>
 
