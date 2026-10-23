@@ -155,6 +155,7 @@ document.addEventListener('keydown', e => {
   if (i >= 0) {
     const m = 12 * (octave + 1) + i;
     auditionNote(m);
+    recordNote(m, 100);
   }
 });
 
@@ -187,3 +188,4 @@ setInterval(() => {
 }, 4000);
 
 meters();
+initMidi();
