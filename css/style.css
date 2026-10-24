@@ -105,6 +105,8 @@ button.active { background: #5b4a2c; color: #ffb35c; }
 #work { overflow-y: auto; }
 .panel { flex: none; }
 .panel.grow { flex: 1 0 380px; }
+#voiceview { display: block; width: 100%; height: 56px; background: #1b1f22; }
+#vrec.active { background: #7d2c25; color: #fff; }
 #synth { display: flex; flex-wrap: wrap; gap: 8px 16px; padding: 8px 10px; }
 .sk { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 82px; color: var(--dim); }
 .sk input[type=range] { width: 76px; }
@@ -170,6 +172,14 @@ button.active { background: #5b4a2c; color: #ffb35c; }
 .steps b, .ruler i { flex: none; }
 .row { width: max-content; }
 #rollruler, #rollbody, #velrow { min-width: var(--rw, 560px); }
+#atracks { display: flex; }
+#alabels { flex: none; width: 92px; padding-top: 18px; background: #2a2f33; border-right: 1px solid var(--edge); }
+.alabel { height: 52px; padding: 4px 6px; cursor: pointer; color: var(--dim); border-bottom: 1px solid var(--edge);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.alabel.sel { color: var(--accent); background: #343a40; }
+#awrap { position: relative; flex: 1; overflow-x: auto; }
+#aview { display: block; touch-action: none; }
+#aplayhead { position: absolute; top: 0; bottom: 0; width: 2px; background: #fff; opacity: .6; display: none; pointer-events: none; }
 #dvelwrap { overflow-x: auto; padding: 6px; }
 #dvel { display: grid; height: 56px; background: #252a2e; cursor: ns-resize; touch-action: none; }
 #dvel div { position: relative; border-left: 1px solid #2d3337; }

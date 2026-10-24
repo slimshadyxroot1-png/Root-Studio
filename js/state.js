@@ -28,6 +28,7 @@ const blankTrack = name => ({
   name: name || 'Track 1', wave: 'sawtooth', synth: { ...SYNTH_DEFAULT },
   vol: 0.5, pan: 0, mute: false, solo: false, rev: 0.4, del: 1, fx: 'none', fxAmt: 0.5
 });
+const blankAudio = name => ({ name: name || 'Audio', vol: 0.9, pan: 0, mute: false, solo: false, rev: 0, del: 0, fx: 'none', fxAmt: 0.5, clips: [] });
 // a pattern has drum steps, notes per track as step:row, and automation
 const blankPattern = (name, tracks) => ({
   name, bars: 1, drums: range(6).map(() => Array(MAXSTEPS).fill(0)),
@@ -40,7 +41,7 @@ function blankSong() {
     eq: { low: 0, mid: 0, high: 0 }, kit: 'Retro', len: 1, vel: 100, root: 0, scale: 'Minor',
     sig: '4/4', mode: 'pattern', loop: { on: false, a: 0, b: 4 }, sel: 0, cur: 0,
     drums: ['Kick', 'Snare', 'Hi-hat', 'Open hat', 'Clap', 'Tom'].map(name => ({ name, vol: 0.8, pan: 0, mute: false, solo: false, rev: 0.15, del: 1, fx: 'none', fxAmt: 0.5, sample: '' })),
-    sauto: {}, ccmap: {}, cutMul: 1,
+    audioTracks: [blankAudio('Audio 1')], sauto: {}, ccmap: {}, cutMul: 1,
     tracks: [blankTrack('Track 1')],
     patterns: [blankPattern('Pattern 1', 1)],
     arr: range(BARS).map(i => (i < 4 ? 0 : -1))      // playlist: pattern index per bar, -1 = empty
@@ -51,8 +52,8 @@ const curPat = () => song.patterns[song.cur];
 const curTrack = () => song.tracks[song.sel];
 const curNotes = () => curPat().notes[song.sel];
 // strip keys: t0 is a track, d0 a drum, a0 an audio track
-const stripOf = key => ({ t: song.tracks, d: song.drums }[key[0]] || [])[+key.slice(1)];
-const allKeys = () => [...song.tracks.map((_, i) => 't' + i), ...song.drums.map((_, i) => 'd' + i)];
+const stripOf = key => ({ t: song.tracks, d: song.drums, a: song.audioTracks }[key[0]] || [])[+key.slice(1)];
+const allKeys = () => [...song.tracks.map((_, i) => 't' + i), ...song.drums.map((_, i) => 'd' + i), ...song.audioTracks.map((_, i) => 'a' + i)];
 function songEnd() {
   let e = 0;
   song.arr.forEach((p, i) => { if (p >= 0) e = i + 1; });

@@ -26,6 +26,7 @@ function applySong() {
   syncSynth();
   buildMixer();
   paintArr();
+  buildAudio();
   syncDrumUi();
   syncGraph();
   syncRack();
@@ -92,6 +93,8 @@ function readSong(text) {
     }),
     auto: p.auto || {}, curve: p.curve || {}
   }));
+  s.audioTracks = (s.audioTracks && s.audioTracks.length ? s.audioTracks : [blankAudio('Audio 1')])
+    .map(t => ({ ...blankAudio(), ...t, clips: (t.clips || []).map(c => ({ off: 0, rate: 1, ...c })) }));
   s.eq = { ...base.eq, ...s.eq };
   s.loop = { ...base.loop, ...s.loop };
   s.arr = range(BARS).map(i => (s.arr && s.arr[i] != null && s.patterns[s.arr[i]] ? s.arr[i] : -1));
@@ -108,6 +111,10 @@ function readSong(text) {
 async function songJson(withMedia) {
   const data = { ...song };
   if (withMedia) {
+    data.buffers = {};
+    for (const id of new Set(song.audioTracks.flatMap(t => t.clips.map(c => c.buf)))) {
+      if (clipBufs[id]) data.buffers[id] = await blobToB64(toWav(clipBufs[id]));
+    }
     data.samples = {};
     for (let i = 0; i < song.drums.length; i++) {
       if (song.drums[i].sample && drumBufs[i]) data.samples[i] = await blobToB64(toWav(drumBufs[i]));
@@ -117,11 +124,24 @@ async function songJson(withMedia) {
 }
 
 async function restoreMedia(data) {
+  for (const id in data.buffers || {}) {
+    const blob = b64ToBlob(data.buffers[id]);
+    clipBufs[id] = await decodeBlob(blob);
+    delete peaks[id];
+    kv('put', 'buf:' + id, blob);
+  }
   drumBufs.length = 0;
   for (const i in data.samples || {}) {
     const blob = b64ToBlob(data.samples[i]);
     drumBufs[+i] = await decodeBlob(blob);
     kv('put', 'drum' + i, blob);
+  }
+  if (data.audio) {            // old song with one audio take, turn it into a clip
+    const blob = b64ToBlob(data.audio), buf = await decodeBlob(blob), id = newBufId();
+    clipBufs[id] = buf;
+    kv('put', 'buf:' + id, blob);
+    song.audioTracks[0].clips.push({ buf: id, start: ((data.voice && data.voice.offset) || 0) * STEPS, off: 0, dur: buf.duration, rate: 1 });
+    if (data.voice) { song.audioTracks[0].vol = data.voice.vol; song.audioTracks[0].mute = !!data.voice.mute; }
   }
 }
 
@@ -183,7 +203,9 @@ Object.keys(presets).forEach(name => {
   const b = document.createElement('button');
   b.textContent = name;
   b.addEventListener('click', () => {
+    const keepAudio = song.audioTracks;
     song = blankSong();
+    song.audioTracks = keepAudio;
     presets[name](song);
     song.name = name;
     applySong();

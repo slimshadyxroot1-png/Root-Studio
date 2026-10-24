@@ -59,11 +59,3 @@ $('dclear').addEventListener('click', () => {
   kv('del', 'drum' + drumIdx());
   syncDrumUi();
 });
-// load saved drum samples from the browser
-async function ensureBuffers() {
-  for (let i = 0; i < song.drums.length; i++) {
-    if (!song.drums[i].sample || drumBufs[i]) continue;
-    const blob = await kv('get', 'drum' + i);
-    if (blob) { try { drumBufs[i] = await decodeBlob(blob); } catch (err) { /* unreadable */ } }
-  }
-}
