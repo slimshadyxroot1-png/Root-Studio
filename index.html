@@ -76,6 +76,18 @@
       <div id="mixer"></div>
     </div>
     <div class="panel">
+      <div class="title">Audio tracks
+        <label>Tool <select id="atool"><option value="move">Move / trim</option><option value="cut">Cut</option><option value="stretch">Stretch</option><option value="delete">Delete</option></select></label>
+        <label>Snap <select id="asnap"><option value="beat">Beat</option><option value="bar">Bar</option><option value="step">Step</option></select></label>
+        <button id="aadd">Add track</button><button id="adel">Remove track</button>
+        <button id="vrec" title="Records from the microphone into the selected track while the song plays. Use headphones.">Record</button>
+        <button id="aopen">Load audio</button><input id="afile" type="file" accept="audio/*" hidden>
+        <label>Latency fix <input id="vlat" type="number" min="0" max="500" value="0"> ms</label>
+        <span>Click a track name to choose where audio goes. Move: drag a clip, or drag its edges to trim. Cut: click a clip. Stretch: drag a clip longer or shorter (pitch follows).</span>
+      </div>
+      <div id="atracks"><div id="alabels"></div><div id="awrap"><canvas id="aview"></canvas><div id="aplayhead"></div></div></div>
+    </div>
+    <div class="panel">
       <div class="title">Synthesizer
         <select id="synthPreset"><option value="">Load preset</option></select>
         <span>Drives the selected track. Osc 1 is chosen in the piano roll.</span>
@@ -101,7 +113,7 @@
         <label>Osc 1 <select id="wave">
           <option value="sawtooth">Saw</option><option value="square">Square</option>
           <option value="triangle">Triangle</option><option value="sine">Sine</option>
-          </select></label>
+          <option value="fm">FM</option><option value="pulse">Pulse</option><option value="wavetable">Wavetable</option></select></label>
         <label>Key <select id="root"></select></label>
         <label><select id="scale"></select></label>
         <label>Note length <select id="len">
@@ -141,6 +153,7 @@
 <script src="js/synth.js"></script>
 <script src="js/mixer.js"></script>
 <script src="js/arrange.js"></script>
+<script src="js/vocals.js"></script>
 <script src="js/drums.js"></script>
 <script src="js/tools.js"></script>
 <script src="js/midi.js"></script>

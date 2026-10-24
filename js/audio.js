@@ -289,6 +289,7 @@ function queueStep(c, g, s, t, p, b, lap, k = 0) {
     });
   }
   if (metro && s % BEAT === 0) click(c, g.in, t, s === 0);
+  if (s === 0) playClips(c, g, t, tb);
 }
 
 function auditionNote(m, vel = 100) {

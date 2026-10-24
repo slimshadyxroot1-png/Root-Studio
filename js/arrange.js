@@ -102,6 +102,7 @@ function paintArr() {
 }
 
 function paintArrHead(b, sb) {
+  moveAudioHead(b, sb);
   document.querySelectorAll('#arr b.now').forEach(e => e.classList.remove('now'));
   if (b >= 0 && song.mode === 'song' && $('arr').children[b]) $('arr').children[b].classList.add('now');
 }
