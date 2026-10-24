@@ -106,6 +106,50 @@ function startAudio() {
   if (ctx.state === 'suspended') ctx.resume();
 }
 
+// automation, values 0 to 1 per step
+
+function autoTargets() {
+  const sm = param => (g, x, t, nx, t2) => {
+    const p = param(g);
+    if (nx == null) p.setTargetAtTime(x, t, 0.03);
+    else { p.setValueAtTime(x, t); p.linearRampToValueAtTime(nx, t2); }   // smooth curve to the next step
+  };
+  const T = [
+    { id: 'master', label: 'Master volume', lo: 0, hi: 1, base: () => song.master, set: sm(g => g.master.gain) },
+    { id: 'reverb', label: 'Reverb return', lo: 0, hi: 1, base: () => song.reverb, set: sm(g => g.rev.gain) },
+    { id: 'delay', label: 'Delay return', lo: 0, hi: 0.8, base: () => song.delay, set: sm(g => g.wet.gain) },
+    { id: 'filter', label: 'Synth filter cutoff', lo: 0.05, hi: 1, base: () => song.cutMul }
+  ];
+  song.tracks.forEach((t, i) => {
+    T.push({ id: 'vol' + i, label: t.name + ' volume', lo: 0, hi: 1, base: () => t.vol, set: sm(g => strip(g, 't' + i).vol.gain) });
+    T.push({ id: 'pan' + i, label: t.name + ' pan', lo: -1, hi: 1, base: () => t.pan, set: sm(g => strip(g, 't' + i).pan.pan) });
+  });
+  return T;
+}
+
+// applies automation for this step, returns the filter multiplier
+function applyAuto(c, g, p, s, t, tb) {
+  const sa = song.mode === 'song' ? song.sauto : {};
+  const has = Object.keys(p.auto).length > 0 || Object.keys(sa).length > 0;
+  if (!has && !g.dirty) return song.cutMul;
+  g.dirty = has;
+  let fm = song.cutMul;
+  autoTargets().forEach(T => {
+    const span = T.hi - T.lo, a = p.auto[T.id], raw = a ? a[s] : null, sv = sa[T.id], bv = sv ? sv[tb] : null;
+    let x = T.base(), nx = null;
+    if (raw != null) {
+      x = T.lo + raw * span;
+      const nr = p.curve && p.curve[T.id] === 'smooth' ? a[s + 1] : null;
+      if (nr != null) nx = T.lo + nr * span;
+    } else if (bv != null) {               // song automation glides to the next bar
+      const nb = sv[tb + 1] != null ? sv[tb + 1] : bv, f = (s % STEPS) / STEPS, d = 1 / STEPS;
+      x = T.lo + (bv + (nb - bv) * f) * span;
+      nx = T.lo + (bv + (nb - bv) * (f + d)) * span;
+    }
+    if (T.id === 'filter') fm = x; else T.set(g, x, t, nx, t + secPerStep());
+  });
+  return fm;
+}
 
 // instruments
 
@@ -163,16 +207,24 @@ function drum(c, out, name, t, vol) {
 
 // scheduling
 
+// play the loaded sample or the built-in sound
 function drumHit(c, out, i, t, vel) {
-  drum(c, out, song.drums[i].name, t, vel);
+  const buf = song.drums[i].sample ? drumBufs[i] : null;
+  if (!buf) return drum(c, out, song.drums[i].name, t, vel);
+  const src = c.createBufferSource(), g = c.createGain();
+  src.buffer = buf;
+  g.gain.value = vel;
+  src.connect(g); g.connect(out);
+  src.start(t);
 }
 
 
+const NOPAT = { auto: {}, curve: {} };
 
 // s is the step in the bar, k is the bar of the pattern, tb is the bar on the timeline
 function queueStep(c, g, s, t, p, b, lap, k = 0) {
   const ps = k * STEPS + s, tb = song.mode === 'song' ? b : lap;
-  const fm = 1;
+  const fm = applyAuto(c, g, p || NOPAT, ps, t, tb);
   if (p) {
     p.drums.forEach((row, i) => {
       if (row[ps] && audible('d' + i)) drumHit(c, strip(g, 'd' + i).in, i, t, row[ps] / 100);

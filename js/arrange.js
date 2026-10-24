@@ -98,6 +98,7 @@ function paintArr() {
   range(BARS).forEach(paintBar);
   [...$('arr').children].forEach((b, i) =>
     b.classList.toggle('lp', song.loop.on && i >= song.loop.a && i < song.loop.b));
+  paintSauto();
 }
 
 function paintArrHead(b, sb) {
@@ -160,6 +161,7 @@ $('trackName').addEventListener('input', e => {
   $('trackSel').options[song.sel].text = e.target.value;
   syncRack();
   syncMixer();
+  fillAutoTargets();
 });
 $('addTrack').addEventListener('click', () => {
   if (song.tracks.length >= 8) return say('Eight tonal tracks is the limit.');
@@ -188,3 +190,83 @@ $('delTrack').addEventListener('click', () => {
   song.sel = Math.min(i, song.tracks.length - 1);
   applySong();
 });
+
+// automation lane
+
+function fillAutoTargets() {
+  ['autoTarget', 'sTarget'].forEach(id => {
+    const sel = $(id), cur = sel.value;
+    sel.length = 0;
+    autoTargets().forEach(t => sel.add(new Option(t.label, t.id)));
+    if ([...sel.options].some(o => o.value === cur)) sel.value = cur;
+  });
+}
+
+function paintAuto() {
+  const id = $('autoTarget').value, T = autoTargets().find(t => t.id === id);
+  const a = curPat().auto[id], lane = $('autolane');
+  $('autoCurve').value = (curPat().curve || {})[id] || 'step';
+  lane.style.gridTemplateColumns = `repeat(${PSTEPS}, 1fr)`;
+  const base = T ? (T.base() - T.lo) / (T.hi - T.lo) : 0;
+  lane.innerHTML = range(PSTEPS).map(s => {
+    const v = a ? a[s] : null;
+    return `<div data-s="${s}" class="ac${s % BEAT === 0 ? ' beat' : ''}">${v != null ? `<i style="height:${v * 100}%"></i>` : ''}</div>`;
+  }).join('') + `<u style="bottom:${Math.min(1, Math.max(0, base)) * 100}%"></u>`;
+}
+
+let autoDrag = false;
+function autoPoint(e) {
+  const r = $('autolane').getBoundingClientRect(), id = $('autoTarget').value, p = curPat();
+  const s = Math.min(PSTEPS - 1, Math.max(0, Math.floor((e.clientX - r.left) / r.width * PSTEPS)));
+  if (!p.auto[id]) p.auto[id] = Array(MAXSTEPS).fill(null);
+  p.auto[id][s] = e.shiftKey ? null : Math.min(1, Math.max(0, (r.bottom - e.clientY) / r.height));
+  if (p.auto[id].every(v => v == null)) delete p.auto[id];
+  paintAuto();
+}
+$('autolane').addEventListener('pointerdown', e => {
+  pushUndo();
+  autoDrag = true;
+  $('autolane').setPointerCapture(e.pointerId);
+  autoPoint(e);
+});
+$('autolane').addEventListener('pointermove', e => { if (autoDrag) autoPoint(e); });
+$('autolane').addEventListener('pointerup', () => { autoDrag = false; });
+$('autoTarget').addEventListener('input', paintAuto);
+$('autoCurve').addEventListener('input', e => {
+  const p = curPat();
+  p.curve = p.curve || {};
+  p.curve[$('autoTarget').value] = e.target.value;
+});
+$('autoClear').addEventListener('click', () => {
+  pushUndo();
+  delete curPat().auto[$('autoTarget').value];
+  paintAuto();
+});
+
+// song automation
+
+function paintSauto() {
+  const a = song.sauto[$('sTarget').value];
+  $('sauto').innerHTML = range(BARS).map(i =>
+    `<b data-i="${i}">${a && a[i] != null ? `<i style="height:${a[i] * 100}%"></i>` : ''}</b>`).join('');
+}
+
+let sDrag = false;
+function sautoPoint(e) {
+  const r = $('sauto').getBoundingClientRect(), id = $('sTarget').value;
+  const i = Math.min(BARS - 1, Math.max(0, Math.floor((e.clientX - r.left) / r.width * BARS)));
+  if (!song.sauto[id]) song.sauto[id] = Array(BARS).fill(null);
+  song.sauto[id][i] = e.shiftKey ? null : Math.min(1, Math.max(0, (r.bottom - e.clientY) / r.height));
+  if (song.sauto[id].every(v => v == null)) delete song.sauto[id];
+  paintSauto();
+}
+$('sauto').addEventListener('pointerdown', e => {
+  pushUndo();
+  sDrag = true;
+  $('sauto').setPointerCapture(e.pointerId);
+  sautoPoint(e);
+});
+$('sauto').addEventListener('pointermove', e => { if (sDrag) sautoPoint(e); });
+$('sauto').addEventListener('pointerup', () => { sDrag = false; });
+$('sTarget').addEventListener('input', paintSauto);
+$('sClear').addEventListener('click', () => { pushUndo(); delete song.sauto[$('sTarget').value]; paintSauto(); });

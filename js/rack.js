@@ -35,6 +35,7 @@ function syncRack() {
       b.style.opacity = v ? 0.45 + 0.55 * v / 127 : '';
     });
   });
+  paintDVel();
 }
 
 let drag = null;
