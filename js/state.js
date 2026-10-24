@@ -39,6 +39,7 @@ function blankSong() {
     eq: { low: 0, mid: 0, high: 0 }, kit: 'Retro', len: 1, vel: 100, root: 0, scale: 'Minor',
     sig: '4/4', mode: 'pattern', loop: { on: false, a: 0, b: 4 }, sel: 0, cur: 0,
     drums: ['Kick', 'Snare', 'Hi-hat', 'Open hat', 'Clap', 'Tom'].map(name => ({ name, vol: 0.8, pan: 0, mute: false, solo: false, rev: 0.15, del: 1, fx: 'none', fxAmt: 0.5, sample: '' })),
+    sauto: {}, ccmap: {}, cutMul: 1,
     tracks: [blankTrack('Track 1')],
     patterns: [blankPattern('Pattern 1', 1)],
     arr: range(BARS).map(i => (i < 4 ? 0 : -1))      // playlist: pattern index per bar, -1 = empty

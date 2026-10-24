@@ -12,6 +12,7 @@ function applySong() {
   $('swing').value = song.swing * 100;
   $('master').value = song.master * 100;
   $('delay').value = song.delay * 100;
+  $('kit').value = song.kit;
   $('sig').value = song.sig;
   $('root').value = song.root;
   $('scale').value = song.scale;
@@ -21,9 +22,11 @@ function applySong() {
   applySig();                    // rebuilds the rack and roll for the bar length
   fillTracks();
   fillPatterns();
+  fillAutoTargets();
   syncSynth();
   buildMixer();
   paintArr();
+  syncDrumUi();
   syncGraph();
   syncRack();
   paintRoll();
@@ -95,6 +98,8 @@ function readSong(text) {
   s.sel = Math.min(Math.max(0, s.sel | 0), s.tracks.length - 1);
   s.cur = Math.min(Math.max(0, s.cur | 0), s.patterns.length - 1);
   delete s.voice; delete s.audio; delete s.mix; delete s.buffers; delete s.samples;
+  s.sauto = s.sauto || {};
+  s.ccmap = s.ccmap || {};
   song = s;
   return data;
 }
@@ -102,9 +107,23 @@ function readSong(text) {
 // audio clips and drum samples are saved inside the file as base64
 async function songJson(withMedia) {
   const data = { ...song };
+  if (withMedia) {
+    data.samples = {};
+    for (let i = 0; i < song.drums.length; i++) {
+      if (song.drums[i].sample && drumBufs[i]) data.samples[i] = await blobToB64(toWav(drumBufs[i]));
+    }
+  }
   return JSON.stringify(data, null, withMedia ? 2 : 0);
 }
 
+async function restoreMedia(data) {
+  drumBufs.length = 0;
+  for (const i in data.samples || {}) {
+    const blob = b64ToBlob(data.samples[i]);
+    drumBufs[+i] = await decodeBlob(blob);
+    kv('put', 'drum' + i, blob);
+  }
+}
 
 async function saveFile() {
   const filename = (song.name || 'root-studio').replace(/[^\w-]+/g, '-') + '.json';
@@ -131,6 +150,7 @@ $('file').addEventListener('change', async e => {
   try {
     stop();
     const data = readSong(await f.text());
+    await restoreMedia(data);
     applySong();
     say('Opened ' + f.name);
   } catch (err) {
@@ -181,6 +201,8 @@ try {
 } catch (err) { /* nothing saved yet */ }
 applySong();
 
+// load clips and samples from the last session
+ensureBuffers();
 
 setInterval(() => {
   try { localStorage.setItem('root-studio', JSON.stringify(song)); }

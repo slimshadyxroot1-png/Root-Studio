@@ -53,6 +53,7 @@ function paintRoll() {
     }
   }
   paintVel();
+  paintAuto();
 }
 
 function ownerOf(s, r) {

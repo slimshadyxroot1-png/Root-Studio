@@ -46,14 +46,30 @@
         <label>Time <select id="sig"></select></label>
         <button id="loopOn" title="Loop a range of bars in song mode">Loop</button>
         <label>bars <input id="loopA" type="number" min="1" max="32"> to <input id="loopB" type="number" min="1" max="32"></label>
-        <span>Click bars to paint the selected pattern (a long pattern fills its length). Click a bar number to set the loop start, Shift+click for the end.</span>
+        <label>Song automation <select id="sTarget"></select></label><button id="sClear">Clear</button>
+        <span>Click bars to paint the selected pattern (a long pattern fills its length). Click a bar number to set the loop start, Shift+click for the end. Drag in the lane under the bars to automate in song mode.</span>
       </div>
-      <div id="arrwrap"><div id="arrruler"></div><div id="arr"></div></div>
+      <div id="arrwrap"><div id="arrruler"></div><div id="arr"></div><div id="sauto"></div></div>
     </div>
     <div class="panel">
       <div class="title">Channel rack
+        <label>Drum kit <select id="kit"><option>Retro</option><option>80s</option><option>Acoustic</option></select></label>
+        <label>Euclid <select id="eucPiece"></select>
+          <input id="eucHits" type="number" min="0" max="16" value="5" title="Hits"> hits
+          <input id="eucRot" type="number" min="0" max="15" value="0" title="Rotate"> rotate
+          <button id="euc">Apply</button></label>
       </div>
       <div id="rack"></div>
+    </div>
+    <div class="panel">
+      <div class="title">Drum sounds
+        <label>Drum <select id="drumSel"></select></label>
+        <button id="dload">Load sample</button><input id="dfile" type="file" accept="audio/*" hidden>
+        <button id="dclear">Use built-in sound</button>
+        <span id="dlabel"></span>
+        <span>Drag in the lane to set the velocity of each hit. Pan, reverb, delay and effects are on the drum's mixer strip.</span>
+      </div>
+      <div id="dvelwrap"><div id="dvel"></div></div>
     </div>
     <div class="panel">
       <div class="title">Mixer <span>Pan, reverb and delay sends, mute and solo per strip. Master EQ, reverb and drive on the right.</span></div>
@@ -65,6 +81,16 @@
         <span>Drives the selected track. Osc 1 is chosen in the piano roll.</span>
       </div>
       <div id="synth"></div>
+    </div>
+    <div class="panel">
+      <div class="title">Automation
+        <label>Parameter <select id="autoTarget"></select></label>
+        <label>Curve <select id="autoCurve"><option value="step">Steps</option><option value="smooth">Smooth</option></select></label>
+        <button id="autoClear">Clear</button>
+        <button id="ccLearn" title="Click, then move a knob on your MIDI controller. It will control the parameter chosen here.">MIDI learn</button><button id="ccClear">Clear MIDI maps</button>
+        <span>Drag to draw a value per step in this pattern. Shift+drag erases. The dashed line is the knob position.</span>
+      </div>
+      <div id="autolane"></div>
     </div>
     <div class="panel grow">
       <div class="title">
@@ -108,12 +134,14 @@
 </footer>
 
 <script src="js/state.js"></script>
+<script src="js/store.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/rack.js"></script>
 <script src="js/roll.js"></script>
 <script src="js/synth.js"></script>
 <script src="js/mixer.js"></script>
 <script src="js/arrange.js"></script>
+<script src="js/drums.js"></script>
 <script src="js/tools.js"></script>
 <script src="js/midi.js"></script>
 <script src="js/app.js"></script>

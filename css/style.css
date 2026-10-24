@@ -145,6 +145,12 @@ button.active { background: #5b4a2c; color: #ffb35c; }
 #vel div.beat { border-left-color: #4b5359; }
 #vel i { position: absolute; left: 25%; right: 25%; bottom: 0; background: var(--accent); border-radius: 2px 2px 0 0; }
 
+#autolane { position: relative; display: grid; height: 70px; margin: 6px; background: #252a2e;
+  cursor: crosshair; touch-action: none; }
+.ac { position: relative; border-left: 1px solid #2d3337; }
+.ac.beat { border-left-color: #4b5359; }
+.ac i { position: absolute; left: 10%; right: 10%; bottom: 0; background: #6ab0ff; border-radius: 2px 2px 0 0; }
+#autolane u { position: absolute; left: 0; right: 0; border-top: 1px dashed #808a91; pointer-events: none; text-decoration: none; }
 #mode.active, #loopOn.active { background: #46562c; color: #d6f08a; }
 #defVel { width: 70px; }
 #trackName { width: 90px; padding: 2px 4px; }
@@ -163,3 +169,12 @@ button.active { background: #5b4a2c; color: #ffb35c; }
 .steps b, .ruler i { flex: none; }
 .row { width: max-content; }
 #rollruler, #rollbody, #velrow { min-width: var(--rw, 560px); }
+#dvelwrap { overflow-x: auto; padding: 6px; }
+#dvel { display: grid; height: 56px; background: #252a2e; cursor: ns-resize; touch-action: none; }
+#dvel div { position: relative; border-left: 1px solid #2d3337; }
+#dvel i { position: absolute; left: 20%; right: 20%; bottom: 0; background: var(--accent); border-radius: 2px 2px 0 0; }
+#sauto { display: grid; grid-template-columns: repeat(32, minmax(26px, 1fr)); gap: 2px; min-width: 880px; margin-top: 4px;
+  touch-action: none; cursor: crosshair; }
+#sauto b { position: relative; height: 44px; background: #252a2e; border-radius: 2px; }
+#sauto i { position: absolute; left: 15%; right: 15%; bottom: 0; background: #6ab0ff; border-radius: 2px 2px 0 0; }
+#ccLearn.active { background: #46562c; color: #d6f08a; }

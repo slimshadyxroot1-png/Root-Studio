@@ -167,3 +167,64 @@ $('arp').addEventListener('click', () => {
   paintRoll();
   syncRack();
 });
+
+// drums
+
+$('kit').addEventListener('input', e => { song.kit = e.target.value; });
+blankSong().drums.forEach(d => $('eucPiece').add(new Option(d.name)));
+
+$('euc').addEventListener('click', () => {
+  const hits = Math.min(STEPS, Math.max(0, +$('eucHits').value || 0));
+  const rot = Math.min(STEPS - 1, Math.max(0, +$('eucRot').value || 0));
+  pushUndo();
+  curPat().drums[$('eucPiece').selectedIndex] =
+    range(MAXSTEPS).map(i => (i < PSTEPS && ((((i % STEPS) - rot + STEPS) % STEPS) * hits) % STEPS < hits ? song.vel : 0));
+  syncRack();
+});
+
+// rows are: kick, snare, hi-hat, open hat, clap, tom
+Object.assign(presets, {
+  'Rock'(s) {
+    setDrums(s, 'x.......x.x.....', '....x.......x...', 'x.x.x.x.x.x.x.x.');
+    s.bpm = 110;
+  },
+  'Techno'(s) {
+    setDrums(s, 'x...x...x...x...', '', 'x.x.x.x.x.x.x.x.', '..x...x...x...x.', '....x.......x...');
+    s.bpm = 130;
+  },
+  'Funk'(s) {
+    setDrums(s, 'x.....x..x.x....', '....x..x.x..x...', 'xxxxxxxxxxxxxxxx');
+    s.bpm = 100; s.swing = 0.2;
+  },
+  'Trap'(s) {
+    setDrums(s, 'x.......x..x....', '', 'x.x.x.xxx.x.x.xx', '', '........x.......');
+    s.bpm = 140;
+  },
+  'Bossa nova'(s) {
+    setDrums(s, 'x.....x.x.....x.', '', 'x.x.x.x.x.x.x.x.', '', '', 'x..x..x...x...x.');
+    s.bpm = 120;
+  },
+  'Reggae'(s) {
+    setDrums(s, '........x.......', '........x.......', 'x.x.x.x.x.x.x.x.', '..x...x...x...x.');
+    s.bpm = 75;
+  }
+});
+
+
+// 16-bit wav from an audio buffer
+function toWav(buf) {
+  const n = buf.length, ch = buf.numberOfChannels, bytes = ch * 2;
+  const out = new DataView(new ArrayBuffer(44 + n * bytes));
+  const text = (at, str) => [...str].forEach((c, i) => out.setUint8(at + i, c.charCodeAt(0)));
+  text(0, 'RIFF'); out.setUint32(4, 36 + n * bytes, true); text(8, 'WAVEfmt ');
+  out.setUint32(16, 16, true); out.setUint16(20, 1, true); out.setUint16(22, ch, true);
+  out.setUint32(24, buf.sampleRate, true); out.setUint32(28, buf.sampleRate * bytes, true);
+  out.setUint16(32, bytes, true); out.setUint16(34, 16, true);
+  text(36, 'data'); out.setUint32(40, n * bytes, true);
+  const data = range(ch).map(c => buf.getChannelData(c));
+  const clip = v => Math.max(-1, Math.min(1, v)) * 32767;
+  for (let i = 0; i < n; i++) {
+    for (let c = 0; c < ch; c++) out.setInt16(44 + (i * ch + c) * 2, clip(data[c][i]), true);
+  }
+  return new Blob([out], { type: 'audio/wav' });
+}
