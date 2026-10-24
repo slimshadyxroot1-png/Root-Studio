@@ -5,22 +5,58 @@ const SYNTH_KNOBS = [
   ['cutoff', 'Cutoff', 100, 12000, 10], ['res', 'Resonance', 0, 20, 0.1], ['envAmt', 'Filter env', 0, 8000, 50],
   ['a', 'Attack', 0.001, 1.5, 0.001], ['d', 'Decay', 0.01, 1.5, 0.01], ['s', 'Sustain', 0, 1, 0.01],
   ['r', 'Release', 0.01, 2, 0.01], ['lfoRate', 'LFO rate', 0.1, 12, 0.1], ['lfoDepth', 'LFO depth', 0, 100, 1],
+  ['uni', 'Unison', 1, 7, 1], ['uniDet', 'Uni spread', 0, 60, 1], ['pitchEnv', 'Pitch env', -24, 24, 1],
+  ['pitchDec', 'Pitch decay', 0.01, 1, 0.01], ['wtPos', 'Wavetable', 0, 1, 0.01]
 ];
-const SHAPES = ['sawtooth', 'square', 'triangle', 'sine'];
+const SHAPES = ['sawtooth', 'square', 'triangle', 'sine', 'fm', 'pulse', 'wavetable'];
 
 const SYNTH_PRESETS = {
   Lead: { wave: 'sawtooth', osc2: 'square', mix: 0.35, detune: 7, octave: 0, cutoff: 4200, res: 1, envAmt: 0, a: 0.01, d: 0.3, s: 0.7, r: 0.2, lfoRate: 5, lfoDepth: 0 },
   Pad: { wave: 'sawtooth', osc2: 'triangle', mix: 0.5, detune: 12, octave: 0, cutoff: 1800, res: 1, envAmt: 600, a: 0.5, d: 0.6, s: 0.8, r: 1.2, lfoRate: 4, lfoDepth: 8 },
   Bass: { wave: 'square', osc2: 'sawtooth', mix: 0.4, detune: 4, octave: -1, cutoff: 700, res: 6, envAmt: 2500, a: 0.005, d: 0.18, s: 0.4, r: 0.1, lfoRate: 5, lfoDepth: 0 },
   Pluck: { wave: 'triangle', osc2: 'sawtooth', mix: 0.3, detune: 3, octave: 1, cutoff: 600, res: 3, envAmt: 5000, a: 0.002, d: 0.15, s: 0, r: 0.2, lfoRate: 5, lfoDepth: 0 },
+  Bell: { wave: 'fm', osc2: 'sine', mix: 0.3, detune: 2, octave: 1, cutoff: 9000, res: 0.5, envAmt: 0, a: 0.002, d: 1, s: 0.1, r: 1, lfoRate: 5, lfoDepth: 0 },
+  Supersaw: { wave: 'sawtooth', osc2: 'sawtooth', mix: 0.5, detune: 10, octave: 0, cutoff: 6000, res: 1, envAmt: 0, a: 0.02, d: 0.3, s: 0.8, r: 0.4, lfoRate: 5, lfoDepth: 0, uni: 5, uniDet: 25 },
+  'Zap bass': { wave: 'sine', osc2: 'triangle', mix: 0.3, detune: 2, octave: 0, cutoff: 5000, res: 1, envAmt: 0, a: 0.001, d: 0.25, s: 0.2, r: 0.15, lfoRate: 5, lfoDepth: 0, pitchEnv: 12, pitchDec: 0.12 },
+  Glass: { wave: 'wavetable', osc2: 'wavetable', mix: 0.5, detune: 6, octave: 0, cutoff: 7000, res: 1, envAmt: 0, a: 0.05, d: 0.5, s: 0.7, r: 0.6, lfoRate: 5, lfoDepth: 0, wtPos: 0.5 }
 };
 
+// four wave shapes, the wavetable knob blends between them
+const WTABLES = [
+  range(16).map(i => (i === 0 ? 1 : 0.15 / i)),
+  range(16).map(i => ([0, 2, 4, 7].includes(i) ? 1 / (1 + i / 3) : 0)),
+  range(16).map(i => 1 / (i + 1)),
+  range(16).map(i => Math.exp(-Math.pow(i - 3, 2) / 4) + 0.7 * Math.exp(-Math.pow(i - 9, 2) / 6))
+];
+function wavetable(c, pos) {
+  const x = Math.min(0.999, pos) * (WTABLES.length - 1), i = Math.floor(x), f = x - i;
+  const real = new Float32Array(17), imag = new Float32Array(17);
+  for (let h = 0; h < 16; h++) imag[h + 1] = WTABLES[i][h] * (1 - f) + WTABLES[i + 1][h] * f;
+  return c.createPeriodicWave(real, imag);
+}
 
 function makeOsc(c, type, hz, cents, t, end, extra, p) {
   const o = c.createOscillator();
   o.frequency.value = hz;
   o.detune.value = cents;
-  o.type = type;
+  if (type === 'fm') {
+    o.type = 'sine';
+    const mod = c.createOscillator(), depth = c.createGain();
+    mod.frequency.value = hz * 2;
+    depth.gain.setValueAtTime(hz * 1.5, t);
+    depth.gain.exponentialRampToValueAtTime(hz * 0.1, t + 0.8);
+    mod.connect(depth); depth.connect(o.frequency);
+    mod.start(t); mod.stop(end);
+    extra.push(mod);
+  } else if (type === 'wavetable') {
+    o.setPeriodicWave(wavetable(c, p.wtPos));
+  } else if (type === 'pulse') {
+    const real = new Float32Array(32), imag = new Float32Array(32);
+    for (let i = 1; i < 32; i++) imag[i] = 2 / (i * Math.PI) * Math.sin(i * Math.PI * 0.25);
+    o.setPeriodicWave(c.createPeriodicWave(real, imag));
+  } else {
+    o.type = type;
+  }
   o.start(t); o.stop(end);
   return o;
 }
@@ -30,11 +66,15 @@ function makeOsc(c, type, hz, cents, t, end, extra, p) {
 function playNote(c, out, midi, t, dur, tr, vel, fm = 1) {
   const p = tr.synth, hz = 440 * Math.pow(2, (midi - 69) / 12), hold = dur === null, extra = [], osc = [];
   const end = hold ? t + 120 : t + dur + p.r * 2 + 0.1;
-  const f = c.createBiquadFilter(), amp = c.createGain(), n = 1;
+  const f = c.createBiquadFilter(), amp = c.createGain(), n = Math.max(1, p.uni | 0);
   // osc 1 and osc 2, each with n unison voices
   const layer = (type, mult, cents, gain) => range(n).forEach(i => {
     const spread = n === 1 ? 0 : (i / (n - 1) - 0.5) * 2 * p.uniDet;
     const o = makeOsc(c, type, hz * mult, cents + spread, t, end, extra, p), g = c.createGain();
+    if (p.pitchEnv) {
+      o.frequency.setValueAtTime(hz * mult * Math.pow(2, p.pitchEnv / 12), t);
+      o.frequency.exponentialRampToValueAtTime(hz * mult, t + p.pitchDec);
+    }
     g.gain.value = gain / Math.sqrt(n);
     o.connect(g); g.connect(f); osc.push(o);
   });

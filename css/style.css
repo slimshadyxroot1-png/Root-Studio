@@ -164,6 +164,7 @@ button.active { background: #5b4a2c; color: #ffb35c; }
 .panel.collapsed .title > * { display: none; }
 .panel.collapsed.grow { flex: none; }
 .c.sel { outline: 2px solid #fff; outline-offset: -2px; }
+.mx select { width: 84px; padding: 2px 4px; }
 
 /* audio clips, long patterns, drum lane, song automation */
 .steps b, .ruler i { flex: none; }
