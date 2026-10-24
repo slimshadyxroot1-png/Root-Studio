@@ -33,12 +33,60 @@ function driveCurve(amt) {
   return cv;
 }
 
+// insert effect for a strip
+function setFx(s, m) {
+  const c = s.vol.context, amt = m.fxAmt;
+  if (s.fxType !== m.fx) {
+    s.fx.forEach(n => { try { n.disconnect(); if (n.stop) n.stop(); } catch (err) { /* already gone */ } });
+    s.fxA.disconnect();
+    s.fx = []; s.duck = null; s.fxp = null; s.fxType = m.fx;
+    const add = n => { s.fx.push(n); return n; };
+    const lfo = hz => { const o = add(c.createOscillator()); o.frequency.value = hz; o.start(); return o; };
+    if (m.fx === 'sidechain') {
+      s.duck = add(c.createGain());
+      s.fxA.connect(s.duck); s.duck.connect(s.fxB);
+    } else if (m.fx === 'chorus' || m.fx === 'flanger') {
+      const d = add(c.createDelay(0.05)), wet = add(c.createGain()), depth = add(c.createGain());
+      const o = lfo(m.fx === 'chorus' ? 0.8 : 0.25);
+      d.delayTime.value = m.fx === 'chorus' ? 0.025 : 0.004;
+      o.connect(depth); depth.connect(d.delayTime);
+      s.fxA.connect(s.fxB); s.fxA.connect(d); d.connect(wet); wet.connect(s.fxB);
+      if (m.fx === 'flanger') { const fb = add(c.createGain()); fb.gain.value = 0.5; d.connect(fb); fb.connect(d); }
+      s.fxp = { wet, depth, k: m.fx === 'chorus' ? 0.006 : 0.003 };
+    } else if (m.fx === 'phaser') {
+      const wet = add(c.createGain()), depth = add(c.createGain()), o = lfo(0.5);
+      let prev = s.fxA;
+      for (let i = 0; i < 4; i++) {
+        const ap = add(c.createBiquadFilter());
+        ap.type = 'allpass'; ap.frequency.value = 800;
+        depth.connect(ap.frequency); prev.connect(ap); prev = ap;
+      }
+      o.connect(depth); prev.connect(wet); wet.connect(s.fxB); s.fxA.connect(s.fxB);
+      s.fxp = { wet, depth, k: 600 };
+    } else {
+      s.fxA.connect(s.fxB);
+    }
+  }
+  if (s.fxp) { s.fxp.wet.gain.value = amt * 0.7; s.fxp.depth.gain.value = s.fxp.k * (0.3 + amt); }
+}
+
+// each kick ducks the sidechain strips
+function duckAll(g, t) {
+  allKeys().forEach(k => {
+    const s = g.strips[k];
+    if (!s || !s.duck) return;
+    s.duck.gain.cancelScheduledValues(t);
+    s.duck.gain.setValueAtTime(1 - stripOf(k).fxAmt * 0.9, t);
+    s.duck.gain.linearRampToValueAtTime(1, t + 0.2);
+  });
+}
 
 function setStrip(s, m) {
   s.vol.gain.value = m.vol;
   s.pan.pan.value = m.pan;
   s.rs.gain.value = m.rev;
   s.ds.gain.value = m.del;
+  setFx(s, m);
 }
 
 function mkStrip(c, g, key) {
@@ -46,7 +94,8 @@ function mkStrip(c, g, key) {
   s.in = c.createGain(); s.vol = c.createGain(); s.pan = c.createStereoPanner();
   s.an = c.createAnalyser(); s.an.fftSize = 256;
   s.rs = c.createGain(); s.ds = c.createGain();
-  s.in.connect(s.vol); s.vol.connect(s.pan); s.pan.connect(s.an); s.an.connect(g.in);
+  s.fxA = c.createGain(); s.fxB = c.createGain(); s.fx = [];
+  s.in.connect(s.fxA); s.fxB.connect(s.vol); s.vol.connect(s.pan); s.pan.connect(s.an); s.an.connect(g.in);
   s.pan.connect(s.rs); s.rs.connect(g.rsend);
   s.pan.connect(s.ds); s.ds.connect(g.dsend);
   setStrip(s, stripOf(key));
@@ -226,6 +275,7 @@ function queueStep(c, g, s, t, p, b, lap, k = 0) {
   const ps = k * STEPS + s, tb = song.mode === 'song' ? b : lap;
   const fm = applyAuto(c, g, p || NOPAT, ps, t, tb);
   if (p) {
+    if (p.drums[0][ps]) duckAll(g, t);
     p.drums.forEach((row, i) => {
       if (row[ps] && audible('d' + i)) drumHit(c, strip(g, 'd' + i).in, i, t, row[ps] / 100);
     });

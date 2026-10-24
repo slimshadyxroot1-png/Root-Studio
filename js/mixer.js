@@ -1,5 +1,6 @@
 // mixer
 
+const FXS = ['none', 'chorus', 'flanger', 'phaser', 'sidechain'];
 const stripName = k => stripOf(k).name;
 
 // master controls: key, label, min, max
@@ -22,6 +23,7 @@ function buildMixer() {
     <div class="mx" data-k="${k}"><div class="mn"></div>
       <div class="mf"><input class="fader" type="range" min="0" max="100" data-f="vol" title="Volume"><div class="meter"><i></i></div></div>
       ${knob('pan', 'Pan', -100, 100)}${knob('rev', 'Reverb', 0, 100)}${knob('del', 'Delay', 0, 100)}
+      <select data-f="fx" title="Insert effect">${FXS.map(x => `<option>${x}</option>`).join('')}</select>${knob('fxAmt', 'FX amount', 0, 100)}
       <div class="mb"><button data-b="mute" title="Mute">M</button><button data-b="solo" title="Solo">S</button></div>
     </div>`).join('') + `
     <div class="mx master" data-k="master"><div class="mn">Master</div>
@@ -39,6 +41,7 @@ function syncMixer() {
     const m = stripOf(k);
     el.querySelector('.mn').textContent = stripName(k);
     el.querySelectorAll('input[data-f]').forEach(i => { i.value = m[i.dataset.f] * 100; });
+    el.querySelector('select[data-f]').value = m.fx;
     ['mute', 'solo'].forEach(b => el.querySelector(`[data-b=${b}]`).classList.toggle('active', !!m[b]));
   });
   document.querySelectorAll('#mixer [data-m]').forEach(i => { i.value = getM(i.dataset.m); });
@@ -47,7 +50,8 @@ function syncMixer() {
 $('mixer').addEventListener('pointerdown', () => pushUndo(), true);
 $('mixer').addEventListener('input', e => {
   const el = e.target, mx = el.closest('.mx');
-  if (el.dataset.f) { stripOf(mx.dataset.k)[el.dataset.f] = +el.value / 100; syncRack(); }
+  if (el.dataset.f === 'fx') stripOf(mx.dataset.k).fx = el.value;
+  else if (el.dataset.f) { stripOf(mx.dataset.k)[el.dataset.f] = +el.value / 100; syncRack(); }
   else if (el.dataset.m) setM(el.dataset.m, +el.value);
   syncGraph();
 });

@@ -21,6 +21,7 @@ const note = (l = 1, v = 100) => ({ l, v });     // length in steps, velocity 1-
 const SYNTH_DEFAULT = {
   osc2: 'square', mix: 0.35, detune: 7, octave: 0, cutoff: 4200, res: 1, envAmt: 0,
   a: 0.01, d: 0.3, s: 0.7, r: 0.2, lfoRate: 5, lfoDepth: 0,
+  uni: 1, uniDet: 15, pitchEnv: 0, pitchDec: 0.1, wtPos: 0
 };
 
 const blankTrack = name => ({
