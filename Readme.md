@@ -195,4 +195,4 @@ It's a hobby project, but ideas and fixes are welcome. Open an issue or a pull r
 
 ## License
 
-[MIT](LICENSE). Free for everyone to use, change and share however they want.
+MIT. Free for everyone to use, change and share however they want.
