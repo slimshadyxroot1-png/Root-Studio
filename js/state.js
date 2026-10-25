@@ -59,7 +59,9 @@ function songEnd() {
   song.arr.forEach((p, i) => { if (p >= 0) e = i + 1; });
   return Math.max(1, e);
 }
+let stemOnly = null;       // set while one stem is being rendered
 function audible(key) {
+  if (stemOnly) return key === stemOnly;
   const any = allKeys().some(k => stripOf(k).solo);
   return any ? !!stripOf(key).solo : !stripOf(key).mute;
 }

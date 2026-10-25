@@ -146,6 +146,10 @@ async function restoreMedia(data) {
 }
 
 async function saveFile() {
+  if (fileHandle) {                // after Save as, Ctrl+S writes to the same file
+    try { await writeHandle(); } catch (err) { say('Could not save: ' + err.message); }
+    return;
+  }
   const filename = (song.name || 'root-studio').replace(/[^\w-]+/g, '-') + '.json';
   const text = await songJson(true);
   const dl = window.claude ? await claude.use('downloads') : null;

@@ -37,6 +37,17 @@
   </aside>
   <section id="work">
     <div class="panel">
+      <div class="title">Project <span>Export and sharing</span></div>
+      <div class="box">
+        <button id="saveas" title="Pick a file once, then Ctrl+S saves straight to it. Choose a OneDrive, Google Drive or Dropbox folder to keep it in the cloud.">Save as...</button>
+        <button id="wav">Export WAV</button>
+        <button id="mp3">Export MP3</button>
+        <button id="stems" title="One WAV per track, drums and audio strip, in a zip">Export stems (zip)</button>
+        <button id="mid">Export MIDI</button>
+        <button id="share" title="Opens your system share sheet with the rendered WAV">Share</button>
+      </div>
+    </div>
+    <div class="panel">
       <div class="title">Playlist
         <button id="mode" title="Pattern mode loops the selected pattern. Song mode plays the playlist below.">Pattern mode</button>
         <label>Pattern <select id="patSel"></select></label>
@@ -145,6 +156,7 @@
   <span id="hint">Keys Z to M play the synth, [ and ] change octave (C4)</span>
 </footer>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js"></script>
 <script src="js/state.js"></script>
 <script src="js/store.js"></script>
 <script src="js/audio.js"></script>
