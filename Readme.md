@@ -35,52 +35,51 @@ The list on the left has presets (Rock, Techno, Funk, Trap and more).
 
 ## What's inside
 
-Click the title of any panel to fold it.
+Click a panel's title to collapse it.
 
 <p align="center">
   <img src="screenshots/playlist.png" width="700">
 </p>
 
-**Playlist.** Turn patterns into a whole song. There are four lanes that play at the same time and 128 bars. You can loop a part, and you can draw automation under the bars, even tempo changes.
+Playlist. Arrange patterns across four lanes and 128 bars. Loop sections and automate things like volume and tempo.
 
 <p align="center">
   <img src="screenshots/drums.png" width="700">
 </p>
 
-**Drums.** Six drums to start, up to 12. You can load your own samples, change pitch and length, and make drums cut each other off (like a closed hi-hat stopping an open one). Each hit can have its own velocity, chance of playing, roll and small timing shift.
+Drums. Build a kit with up to 12 drums, use your own samples, and tweak each hit's velocity, probability, rolls and timing.
 
 <p align="center">
   <img src="screenshots/piano-roll.png" width="700">
 </p>
 
-**Piano roll.** Draw notes, pick a key and scale so you can see which notes fit, insert chord progressions, and snap to triplets and 1/32 notes. Play it with your computer keyboard (Z, S, X, D, C, V...) or a MIDI keyboard. Turn on **Rec** to record what you play.
+Piano roll. Draw notes, set a key and scale, add chords, and use different note snap settings. Play with your computer or a MIDI keyboard, or turn on Rec to record.
 
 <p align="center">
   <img src="screenshots/synth.png" width="700">
 </p>
 
-**Synthesizer.** Two oscillators, a sub, noise, a filter, an LFO and presets. A track can also be a sampler that plays your own sound at any pitch.
+Synthesizer. Shape sounds with two oscillators, a sub, noise, filters and an LFO. You can also use a track as a sampler.
 
 <p align="center">
   <img src="screenshots/mixer.png" width="700">
 </p>
 
-**Mixer.** Volume, pan, EQ, a compressor, reverb and delay sends, two effects and group buses for every track. There's also a master section on the right.
+Mixer. Adjust levels and panning, use EQ and compression, add effects, and route tracks through group buses.
 
-**Audio tracks.** Record from the microphone or load audio files, then cut, stretch, fade and reverse them. With a loop on, every pass you record becomes its own take.
+Audio tracks. Record from your mic or import audio. Cut, stretch, fade and reverse clips, with loop recording for multiple takes.
 
 ## Example beats
 
-The `beats` folder has three beats I already made. Each one comes as a `.json` song and as a `.wav` file.
+There are three beats in the `beats` folder, each with a `.json` project and a `.wav` export.
 
 | Beat | BPM |
-|---|---|
+|---|---:|
 | Drill Nights | 140 |
 | Midnight Keys | 64 |
 | West Coast Original | 93 |
 
-- **Just listen:** play the `.wav` file on your computer or phone, no app needed.
-- **Play with it:** open Root Studio, click **Open** and pick one of the `.json` files (or drag it onto the page). Then press **Song mode** and **Space** to hear the whole song, and change anything you like.
+Play the `.wav` files to listen, or open a `.json` file in Root Studio to mess around with the project.
 
 ## License
 
